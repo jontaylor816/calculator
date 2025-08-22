@@ -55,6 +55,7 @@ class Calculator(QWidget):
             button = QPushButton(label)
             button.setMinimumSize(60, 60)
             grid.addWidget(button, row, col, rowspan, colspan)
+            button.clicked.connect(lambda checked, text=label: self.on_button_click(text))
 
         # make rows and columns stretch propotionally
         for i in range(4):
@@ -68,23 +69,38 @@ class Calculator(QWidget):
         vbox.addLayout(grid)
         vbox.addStretch(1)
 
-        def on_button_click(self, text):
-            if text == 'C':
-                self.display.clear()
-            elif text == '=':
-                expression = self.display.text()
-                self.calculate(expression)
-            else:
-                self.display.setText(self.display.text() + text)
+    def on_button_click(self, text):
+        if text == 'C':
+            self.display.clear()
+        elif text == '=':
+            expression = self.display.text()
+            self.calculate(expression)
+        else:
+            self.display.setText(self.display.text() + text)
 
-        def calculate(self, expression):
-            try:
-                import numpy as np
-                # evaluate expression using numpy's namespace
-                result = str(eval(expression, {"__builtins__": None}, vars(np)))
-                self.display.setText(result)
-            except Exception:
-                self.display.setText("Error")
+    def calculate(self, expression):
+        try:
+            import numpy as np
+            # evaluate expression using numpy's namespace
+            result = str(eval(expression, {"__builtins__": None}, vars(np)))
+            self.display.setText(result)
+        except Exception:
+            self.display.setText("Error")
+
+    def keyPressEvent(self, event):
+        key = event.text()
+        if key.isdigit() or key in ['+', '-', '*', '/', '.']:
+            self.on_button_click(key)
+        elif event.key() == 16777220: # enter key
+            self.on_button_click('=')
+        elif event.key() == 16777221: # enter on numpad
+            self.on_button_click('=')
+        elif event.key() == 16777219:
+            self.display.setText(self.display.text()[:-1])
+        elif key.upper() == 'C': # clear with c
+            self.on_button_click('C')
+        else:
+            super().keyPressEvent(event)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
